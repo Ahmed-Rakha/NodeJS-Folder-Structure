@@ -6,9 +6,14 @@ import { UnprocessableEntityException } from "../../Common/Exceptions/error.exce
 const productRouter = Router();
 
 productRouter.get("/", async (req, res) => {
-  res.json({ message: "Product route is working!" });
+  const products = await productService.getProducts(req.query);
+  successResponse({ res, data: products });
 });
 
+productRouter.get("/:id", async (req, res) => {
+  const product = await productService.getProductById(req.params);
+  successResponse({ res, data: product });
+});
 productRouter.patch("/:id", async (req, res) => {
   console.log({ params: req.params, body: req.body });
   const updatedProduct = await productService.updateProduct({

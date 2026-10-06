@@ -1,9 +1,16 @@
 import Product from "../../DB/Models/products.model.js";
-import { createOne, insertMany } from "../../Common/repository/index.js";
+import {
+  createOne,
+  find,
+  findOne,
+  insertMany,
+} from "../../DB/repository/db.repository.js";
 import {
   buildOutcome,
   parseBulkInsertResult,
 } from "../../Common/utils/mongoose/parseBulkInsertResult.js";
+import { NotFoundException } from "../../Common/Exceptions/error.exceptions.js";
+import { bulkInsert } from "../../DB/repository/db.repository.js";
 
 export const updateProduct = async (inputs) => {
   if (!inputs || !inputs.id) {
@@ -31,41 +38,8 @@ export const updateProduct = async (inputs) => {
   }
 };
 
-export const createProduct = async (inputs) => {
-  try {
-    if (!inputs) {
-      throw new Error("Product data is required for creation.");
-    }
-    if (Array.isArray(inputs) && inputs.length === 0) {
-      throw new Error("Product data must be a non-empty array.");
-    }
-    if (!Array.isArray(inputs) && typeof inputs !== "object") {
-      throw new Error("Product data must be an object or an array of objects.");
-    }
-    if (!Array.isArray(inputs) && typeof inputs === "object") {
-      inputs = [inputs]; // Wrap single product in an array for uniform processing
-    }
-
-    const insertedDocs = await insertMany(Product, inputs, {
-      ordered: false,
-      throwOnValidationError: true,
-      // rawResult: true,
-    });
-    // console.log("Products", insertedDocs);
-    return buildOutcome(inputs.length, insertedDocs, []);
-  } catch (error) {
-    // console.dir(error, { depth: null });
-    const BULK_ERRORS = new Set([
-      "MongoBulkWriteError",
-      "MongooseBulkWriteError",
-    ]);
-    if (!BULK_ERRORS.has(error.name)) throw error;
-
-    const { insertedDocs, failedDocs } = parseBulkInsertResult(error, inputs);
-    return buildOutcome(inputs.length, insertedDocs, failedDocs);
-  }
-};
-
+export const createProduct = async (inputs) =>
+  await bulkInsert(Product, inputs);
 /*
 
 Ordered ==> False: I would use the ordered set to false because I would like to skip the errored Docs and process the valid ones
@@ -121,3 +95,17 @@ Then I will need handle it inside the CATCH Block and return the error to the us
 The other approach ==>  is to use the option throwOnValidationError: true which will throw the error 
 to the CATCH Block and handle all there instead of handling it inside both the try and catch blocks like in the first approach
 */
+
+export const getProducts = async () => {
+  const result = await find(Product, undefined, { lean: true });
+  return result;
+};
+
+export const getProductById = async (inputs) => {
+  const result = await findOne(Product, { _id: inputs.id }, { lean: true });
+  if (!result) {
+    throw NotFoundException({ message: "Product not found." });
+  }
+
+  return result;
+};

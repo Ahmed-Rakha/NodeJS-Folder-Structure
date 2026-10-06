@@ -1,21 +1,5 @@
 import mongoose from "mongoose";
-import { toArray } from "../../utils/parsers/array.parser.js";
-
-export const buildOutcome = (total, insertedDocs, failedDocs) => {
-  const inserted = insertedDocs.length;
-  const failed = failedDocs.length;
-
-  return {
-    insertedDocs,
-    failedDocs,
-    summary: {
-      total,
-      inserted,
-      failed,
-      // status: failed === 0 ? "success" : inserted === 0 ? "failed" : "partial",
-    },
-  };
-};
+import { toArray } from "../../../Common/utils/parsers/array.parser.js";
 
 const DUPLICATE_KEY_CODE = 11000;
 
